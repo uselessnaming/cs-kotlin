@@ -22,8 +22,10 @@ fun main() {
     println(cm.values)
 
     val ctm = CustomTreeMap<Int, Int>()
-    repeat(15) { i ->
-        ctm[i + 1] = i + 1
-    }
+    ctm[15] = 32
+    ctm[31] = 63
+    ctm[0] = 1
     ctm.printTree()
+    println("keys : ${ctm.getKeys()}")
+    println("values : ${ctm.values}")
 }

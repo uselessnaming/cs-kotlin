@@ -40,4 +40,19 @@ class CustomMap<K, V>(capacity: Int) {
     }
 
     operator fun set(key: K, value: V) = put(key, value)
+
+    fun sortedMap(): CustomMap<K, V> {
+        val hashIndex = keys.withIndex().map { it.index to it.value.hashCode() }
+            .sortedBy { it.second }
+            .map { it.first }
+        val newMap = CustomMap<K, V>(this.keys.size)
+
+        for (idx in hashIndex) {
+            val key = keys[idx]
+            val value = values[idx]
+            newMap[key] = value
+        }
+
+        return newMap
+    }
 }

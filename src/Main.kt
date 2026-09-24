@@ -1,13 +1,9 @@
 import map.CustomMap
+import map.CustomTreeMap
 
 //TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 fun main() {
-    val name = "Kotlin"
-    //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-    // to see how IntelliJ IDEA suggests fixing it.
-    println("Hello, " + name + "!")
-
 //    val map = CustomMap<String, Int>(5)
 
     val map = mapOf("value" to 1, "next" to 2, "null" to null)
@@ -24,4 +20,10 @@ fun main() {
     println(cm["eng"])
     println(cm.keys)
     println(cm.values)
+
+    val ctm = CustomTreeMap<Int, Int>()
+    repeat(15) { i ->
+        ctm[i + 1] = i + 1
+    }
+    ctm.printTree()
 }

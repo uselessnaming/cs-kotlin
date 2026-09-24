@@ -12,13 +12,13 @@ fun main() {
     var afterTime = System.currentTimeMillis()
     println("put time : ${afterTime - befTime}")
     println("map")
-    println(cm.keys)
-    println(cm.values)
+//    println(cm.keys)
+//    println(cm.values)
 
     println("sorted")
     val sorted = cm.sortedMap()
-    println(sorted.keys)
-    println(sorted.values)
+//    println(sorted.keys)
+//    println(sorted.values)
 
     println("tree map")
     val ctm = CustomTreeMap<Int, Int>()

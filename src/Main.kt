@@ -4,28 +4,31 @@ import map.CustomTreeMap
 //TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 fun main() {
-//    val map = CustomMap<String, Int>(5)
-
-    val map = mapOf("value" to 1, "next" to 2, "null" to null)
-
-    println("exist value : ${map["value"]}")
-    println("non exist value : ${map["a"]}")
-    println("null value : ${map["null"]}")
-    println("is same? ${map["null"] == map["a"]}")
-
-    val cm = CustomMap<String, Int>(5)
-    cm["a"] = 2
-    cm["b"] = 3
-    println(cm["a"]!! + cm["b"]!!)
-    println(cm["eng"])
+    val cm = CustomMap<Int, Int>(30)
+    var befTime = System.currentTimeMillis()
+    repeat(50000) {
+        cm[200000 - it] = it * 2
+    }
+    var afterTime = System.currentTimeMillis()
+    println("put time : ${afterTime - befTime}")
+    println("map")
     println(cm.keys)
     println(cm.values)
 
+    println("sorted")
+    val sorted = cm.sortedMap()
+    println(sorted.keys)
+    println(sorted.values)
+
+    println("tree map")
     val ctm = CustomTreeMap<Int, Int>()
-    ctm[15] = 32
-    ctm[31] = 63
-    ctm[0] = 1
-    ctm.printTree()
-    println("keys : ${ctm.getKeys()}")
-    println("values : ${ctm.values}")
+    befTime = System.currentTimeMillis()
+    repeat(50000) {
+        ctm[200000 - it] = it * 2
+    }
+    afterTime = System.currentTimeMillis()
+    println("put time : ${afterTime - befTime}")
+//    ctm.printTree()
+//    println("keys : ${ctm.getKeys()}")
+//    println("values : ${ctm.values}")
 }

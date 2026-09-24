@@ -39,8 +39,6 @@ class CustomTreeMap<K, V> {
     }
 
     fun put(key: K, value: V): V? {
-        keys.add(key)
-
         if (head == null) {
             head = Entry(
                 key = key,
@@ -56,19 +54,22 @@ class CustomTreeMap<K, V> {
             while(true) {
                 val key = cur.key.hashCode()
                 when {
-                    key == target -> {
+                    target == key -> {
+                        val bef = cur.value
                         cur.value = value
-                        return value
+                        return bef
                     }
-                    key > target -> {
-                        cur = cur.rightEntry!!
+                    target < key -> {
+                        cur = cur.leftEntry!!
                     }
                     else -> {
-                        cur = cur.leftEntry!!
+                        cur = cur.rightEntry!!
                     }
                 }
             }
         }
+
+        keys.add(key)
 
         var current = head!!
         val keyHash = key.hashCode()

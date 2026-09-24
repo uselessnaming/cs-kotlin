@@ -8,7 +8,7 @@ class CustomTreeMap<K, V> {
 
     private data class Entry<K, V>(
         val key: K,
-        val value: V,
+        var value: V,
         var type: Color,
         var parent: Entry<K, V>? = null,
         var leftEntry: Entry<K, V>? = null,
@@ -39,11 +39,6 @@ class CustomTreeMap<K, V> {
     }
 
     fun put(key: K, value: V): V? {
-        if (keys.contains(key)) {
-            println("해당 key 값은 이미 map에 존재합니다.")
-            return null
-        }
-
         keys.add(key)
 
         if (head == null) {
@@ -53,6 +48,26 @@ class CustomTreeMap<K, V> {
                 type = Color.Black
             )
             return value
+        }
+
+        if (keys.contains(key)) {
+            var cur = head!!
+            val target = key.hashCode()
+            while(true) {
+                val key = cur.key.hashCode()
+                when {
+                    key == target -> {
+                        cur.value = value
+                        return value
+                    }
+                    key > target -> {
+                        cur = cur.rightEntry!!
+                    }
+                    else -> {
+                        cur = cur.leftEntry!!
+                    }
+                }
+            }
         }
 
         var current = head!!

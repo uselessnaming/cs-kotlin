@@ -3,6 +3,7 @@ package map
 class CustomHashMap<K, V>(private var capacity: Int) {
     private val LOAD_FACTOR = 0.75
 
+    private val keys = mutableListOf<K>()
     private var keyCnt = 0
     private var hashMap = arrayOfNulls<Entry<K, V>?>(capacity)
 
@@ -27,6 +28,7 @@ class CustomHashMap<K, V>(private var capacity: Int) {
         if (head == null) {
             hashMap[hashKey] = Entry(key = key, value = value)
             keyCnt++
+            keys.add(key)
             return value
         }
 
@@ -41,10 +43,11 @@ class CustomHashMap<K, V>(private var capacity: Int) {
             if (current.next == null) {
                 current.next = Entry(key = key, value = value)
                 keyCnt++
+                keys.add(key)
                 return value
             }
             current = current.next
-        } while(true)
+        } while (true)
     }
 
     operator fun set(key: K, value: V): V? = put(key, value)
@@ -60,10 +63,10 @@ class CustomHashMap<K, V>(private var capacity: Int) {
         val tmpHashMap = hashMap.copyOf()
         hashMap = arrayOfNulls<Entry<K, V>>(capacity)
 
-        for(idx in tmpHashMap.indices) {
+        for (idx in tmpHashMap.indices) {
             var cur = tmpHashMap[idx]
 
-            while(cur != null) {
+            while (cur != null) {
                 put(cur.key, cur.value)
                 cur = cur.next
             }
@@ -71,6 +74,8 @@ class CustomHashMap<K, V>(private var capacity: Int) {
     }
 
     private fun isCapacityOver(): Boolean = keyCnt > capacity * LOAD_FACTOR
+
+    fun getKeys() = keys
 
     private data class Entry<K, V>(
         val key: K,

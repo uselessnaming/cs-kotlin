@@ -2,7 +2,7 @@ package test_function.test_task
 
 import test_function.MAX_N
 
-private fun countTask() {
+fun countTask() {
     var n = 0
 
     while (n < MAX_N) n++

@@ -1,6 +1,6 @@
 package test_function.test_task
 
-private fun sumAllPrime(limit: Int) {
+fun sumAllPrime(limit: Int) {
     var sum = 2
 
     for (i in 3 until limit) {

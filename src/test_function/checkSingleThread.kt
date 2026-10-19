@@ -16,7 +16,7 @@ fun checkSingleThread() {
         sumAllPrime(MAX_N/50)
         sleep(1000)
         sortTask()
-        println("duration : ${System.nanoTime() - startTime}")
+        println("single thread duration : ${(System.nanoTime() - startTime) / 1_000_000}")
     }
 
     println("task thread start : ${taskThread.threadId()} / ${taskThread.name}")

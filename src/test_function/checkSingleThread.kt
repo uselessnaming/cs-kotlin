@@ -1,5 +1,7 @@
 package test_function
 
+import test_function.test_task.countTask
+import test_function.test_task.sumAllPrime
 import java.lang.Thread.sleep
 import kotlin.concurrent.thread
 

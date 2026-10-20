@@ -10,7 +10,7 @@ fun checkMultiThread() {
 
     val threads = listOf(
         thread(start = false) { countTask() },
-        thread(start = false) { sumAllPrime(MAX_N / 50) },
+        thread(start = false) { sumAllPrime(MAX_N / 10) },
         thread(start = false) { sortTask() }
     )
 

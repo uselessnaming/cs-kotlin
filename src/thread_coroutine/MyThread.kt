@@ -1,8 +1,12 @@
 package thread_coroutine
 
+
+import java.util.concurrent.locks.ReentrantLock
+
 class MyThread(private val runnable: Runnable) {
     private var state = State.NEW
-    private val lock = Object()
+    private val reentrantLock = ReentrantLock()
+    private val condition = reentrantLock.newCondition()
     private val internalThread: Thread = Thread {
         run()
         updateState(State.TERMINATED)
@@ -22,19 +26,23 @@ class MyThread(private val runnable: Runnable) {
     }
 
     fun join() {
-        synchronized(lock) {
+        reentrantLock.lock()
+        try {
             while(state != State.TERMINATED) {
-                lock.wait()
+                condition.await()
             }
+        } finally {
+            reentrantLock.unlock()
         }
     }
 
     private fun updateState(newState: State) {
-        synchronized(lock) {
+        reentrantLock.lock()
+        try {
             println("state change : ${state.name} -> ${newState.name}")
             state = newState
-            lock.notifyAll()
-        }
+            condition.signalAll()
+        } finally {}
     }
 
     private enum class State {
@@ -51,4 +59,5 @@ class MyThread(private val runnable: Runnable) {
  * Q1
  * Object 클래스는 상속 구조를 보면 모든 class는 Object()를 상속받고 있는데
  * 왜 다른 클래스들에서는 notifyAll(), wait()이 동작하지 않을까?
+ * >> 그래서 결국 Lock()이 따로 생겼다네요
  * */

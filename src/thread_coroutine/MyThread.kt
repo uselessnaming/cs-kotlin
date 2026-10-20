@@ -1,0 +1,54 @@
+package thread_coroutine
+
+class MyThread(private val runnable: Runnable) {
+    private var state = State.NEW
+    private val lock = Object()
+    private val internalThread: Thread = Thread {
+        run()
+        updateState(State.TERMINATED)
+    }
+
+    fun start() {
+        if (state != State.NEW) {
+            throw RuntimeException("thread is already running")
+        }
+
+        updateState(State.RUNNABLE)
+        internalThread.start()
+    }
+
+    fun run() {
+        runnable.run()
+    }
+
+    fun join() {
+        synchronized(lock) {
+            while(state != State.TERMINATED) {
+                lock.wait()
+            }
+        }
+    }
+
+    private fun updateState(newState: State) {
+        synchronized(lock) {
+            println("state change : ${state.name} -> ${newState.name}")
+            state = newState
+            lock.notifyAll()
+        }
+    }
+
+    private enum class State {
+        NEW, // 객체 생성 후 start() 호출 전
+        RUNNABLE, // start 호출 이후 JVM에서 실행 or CPU 할당 대기
+        BLOCKED, // synchronized 블록/메소드에 진입 도중 다른 thread의 점유로 인해 대기하는 상태
+        WAITING, // 다른 스레드가 특정 작업을 완료해 주기를 무기한 대기하는 상태
+        TIMED_WAITING, // 시간 제한 대기 상태 (지정된 시간 동안 대기)
+        TERMINATED // run() 종료 or 예외로 인한 중단
+    }
+}
+
+/**
+ * Q1
+ * Object 클래스는 상속 구조를 보면 모든 class는 Object()를 상속받고 있는데
+ * 왜 다른 클래스들에서는 notifyAll(), wait()이 동작하지 않을까?
+ * */

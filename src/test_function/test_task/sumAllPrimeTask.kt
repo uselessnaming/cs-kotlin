@@ -8,8 +8,6 @@ fun sumAllPrime(limit: Int) {
             sum += i
         }
     }
-
-    println("sum all prime value : ${sum}")
 }
 
 private fun isPrime(n: Int): Boolean {

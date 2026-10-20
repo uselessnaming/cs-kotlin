@@ -108,6 +108,71 @@ fun checkMultiThreadUnderCPU6() {
     println("multi duration under cpu 6 in same task : ${(System.nanoTime() - startTime) / 1_000_000}")
 }
 
+fun checkMultiThreadUnderCPU1() {
+    val threads = listOf (
+        thread(start = false) { sortTask() },
+    )
+
+    val startTime = System.nanoTime()
+    threads.forEach { thread -> thread.start() }
+    threads.forEach { thread -> thread.join() }
+    println("multi duration under cpu 1 in same task : ${(System.nanoTime() - startTime) / 1_000_000}")
+}
+
+fun checkMultiThreadUnderCPU2() {
+    val threads = listOf (
+        thread(start = false) { sortTask() },
+        thread(start = false) { sortTask() },
+    )
+
+    val startTime = System.nanoTime()
+    threads.forEach { thread -> thread.start() }
+    threads.forEach { thread -> thread.join() }
+    println("multi duration under cpu 2 in same task : ${(System.nanoTime() - startTime) / 1_000_000}")
+}
+
+fun checkMultiThreadUnderCPU3() {
+    val threads = listOf (
+        thread(start = false) { sortTask() },
+        thread(start = false) { sortTask() },
+        thread(start = false) { sortTask() },
+    )
+
+    val startTime = System.nanoTime()
+    threads.forEach { thread -> thread.start() }
+    threads.forEach { thread -> thread.join() }
+    println("multi duration under cpu 3 in same task : ${(System.nanoTime() - startTime) / 1_000_000}")
+}
+
+fun checkMultiThreadUnderCPU4() {
+    val threads = listOf (
+        thread(start = false) { sortTask() },
+        thread(start = false) { sortTask() },
+        thread(start = false) { sortTask() },
+        thread(start = false) { sortTask() },
+    )
+
+    val startTime = System.nanoTime()
+    threads.forEach { thread -> thread.start() }
+    threads.forEach { thread -> thread.join() }
+    println("multi duration under cpu 4 in same task : ${(System.nanoTime() - startTime) / 1_000_000}")
+}
+
+fun checkMultiThreadUnderCPU5() {
+    val threads = listOf (
+        thread(start = false) { sortTask() },
+        thread(start = false) { sortTask() },
+        thread(start = false) { sortTask() },
+        thread(start = false) { sortTask() },
+        thread(start = false) { sortTask() },
+    )
+
+    val startTime = System.nanoTime()
+    threads.forEach { thread -> thread.start() }
+    threads.forEach { thread -> thread.join() }
+    println("multi duration under cpu 5 in same task : ${(System.nanoTime() - startTime) / 1_000_000}")
+}
+
 fun checkMultiThreadOverCPUTmp() {
     val threads = listOf (
         thread(start = false) { sortTask() },

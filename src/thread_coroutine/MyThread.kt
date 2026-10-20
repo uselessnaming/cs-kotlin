@@ -42,7 +42,9 @@ class MyThread(private val runnable: Runnable) {
             println("state change : ${state.name} -> ${newState.name}")
             state = newState
             condition.signalAll()
-        } finally {}
+        } finally {
+            reentrantLock.unlock()
+        }
     }
 
     private enum class State {

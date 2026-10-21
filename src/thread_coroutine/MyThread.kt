@@ -13,12 +13,17 @@ class MyThread(private val runnable: Runnable) {
     }
 
     fun start() {
-        if (state != State.NEW) {
-            throw RuntimeException("thread is already running")
-        }
+        reentrantLock.lock()
+        try {
+            if (state != State.NEW) {
+                throw RuntimeException("thread is already running")
+            }
 
-        updateState(State.RUNNABLE)
-        internalThread.start()
+            updateState(State.RUNNABLE)
+            internalThread.start()
+        } finally {
+            reentrantLock.unlock()
+        }
     }
 
     fun run() {

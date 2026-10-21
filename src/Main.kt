@@ -7,7 +7,7 @@ fun main() {
     val lock = Object()
     var count = 0
 
-    val runnable = Runnable {
+    val runnable1 = Runnable {
         synchronized(lock) {
             repeat(100_000) {
                 count++
@@ -15,16 +15,23 @@ fun main() {
         }
     }
 
-    val threads = listOf(
-        MyThread(runnable),
-        MyThread(runnable),
-        MyThread(runnable),
-        MyThread(runnable),
-        MyThread(runnable),
-    )
+    val thread1 = Thread(runnable1)
+    var startTime = System.nanoTime()
+    thread1.start()
+    thread1.join()
+    println("repeat in lock duration : ${System.nanoTime() - startTime}")
 
-    threads.forEach { thread -> thread.start() }
-    threads.forEach { thread -> thread.join() }
+    val runnable2 = Runnable {
+        repeat(100_000) {
+            synchronized(lock) {
+                count++
+            }
+        }
+    }
 
-    println("예상 값 : 500000 / 실제 값 : $count")
+    val thread2 = Thread(runnable2)
+    startTime = System.nanoTime()
+    thread2.start()
+    thread2.join()
+    println("repeat out lock duration : ${System.nanoTime() - startTime}")
 }

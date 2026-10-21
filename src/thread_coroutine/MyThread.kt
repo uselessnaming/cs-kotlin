@@ -1,6 +1,5 @@
 package thread_coroutine
 
-
 import java.util.concurrent.locks.ReentrantLock
 
 class MyThread(private val runnable: Runnable) {
@@ -61,10 +60,3 @@ class MyThread(private val runnable: Runnable) {
         TERMINATED // run() 종료 or 예외로 인한 중단
     }
 }
-
-/**
- * Q1
- * Object 클래스는 상속 구조를 보면 모든 class는 Object()를 상속받고 있는데
- * 왜 다른 클래스들에서는 notifyAll(), wait()이 동작하지 않을까?
- * >> 그래서 결국 Lock()이 따로 생겼다네요
- * */

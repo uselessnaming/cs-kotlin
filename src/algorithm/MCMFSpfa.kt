@@ -1,6 +1,6 @@
 package algorithm
 
-class MCMF(private val n: Int) {
+class MCMFSpfa(private val n: Int) {
     private val graph = Array(n) { ArrayList<Edge>() }
 
     fun solve(s: Int, t: Int): Pair<Int, Int> {

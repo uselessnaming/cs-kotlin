@@ -10,7 +10,7 @@ class Dijkstra(private val n: Int) {
     }
 
     fun solve(g: Array<IntArray>, s: Int, t: Int): Int {
-        graph.clear()
+        graph.values.forEach { it.clear() }
         initGraph(g)
 
         val costs = IntArray(n) { INF }

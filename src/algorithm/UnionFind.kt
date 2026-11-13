@@ -15,7 +15,7 @@ class UnionFind(private val n: Int) {
     private fun makeSet() {
         for (i in 0 until n) {
             parents[i] = i
-            size[i] = i
+            size[i] = 1
         }
     }
 

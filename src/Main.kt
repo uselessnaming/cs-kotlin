@@ -1,37 +1,34 @@
-import thread_coroutine.MyThread
-import thread_coroutine.createThread
+import thread_coroutine.MyCoroutine
+import java.util.concurrent.CountDownLatch
+import kotlin.concurrent.thread
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.resume
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 fun main() {
-    val lock = Object()
-    var count = 0
-
-    val runnable1 = Runnable {
-        synchronized(lock) {
-            repeat(100_000) {
-                count++
-            }
+    val values = ArrayDeque(listOf(100, 200))
+    val latch = CountDownLatch(1)
+    val completion = object : Continuation<Int?> {
+        override val context: CoroutineContext = EmptyCoroutineContext
+        override fun resumeWith(result: Result<Int?>) {
+            println("(completion) $result on ${Thread.currentThread().name}")
+            latch.countDown()
         }
     }
-
-    val thread1 = Thread(runnable1)
-    var startTime = System.nanoTime()
-    thread1.start()
-    thread1.join()
-    println("repeat in lock duration : ${System.nanoTime() - startTime}")
-
-    val runnable2 = Runnable {
-        repeat(100_000) {
-            synchronized(lock) {
-                count++
-            }
+    val awaitValue: (Continuation<Int?>) -> Unit = { cont ->
+        val v = values.removeFirst()
+        thread(name = "timer-$v") {
+            Thread.sleep(200)
+            println("[${Thread.currentThread().name}] resume($v)")
+            cont.resume(v)
         }
     }
+    val coroutine = MyCoroutine(completion, awaitValue)
 
-    val thread2 = Thread(runnable2)
-    startTime = System.nanoTime()
-    thread2.start()
-    thread2.join()
-    println("repeat out lock duration : ${System.nanoTime() - startTime}")
+    println("[main] start 호출")
+    coroutine.start()
+    println("[main] start 반환 (아직 완료 전)")
+    latch.await()
+    println("[main] 종료")
 }

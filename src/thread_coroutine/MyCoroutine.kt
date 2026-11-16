@@ -1,0 +1,70 @@
+package thread_coroutine
+
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
+
+class MyCoroutine(
+    private val completion: Continuation<Int?>,
+    private val awaitValue: (Continuation<Int?>) -> Unit
+) : Continuation<Int?> {
+    override val context: CoroutineContext = completion.context
+
+    private var label = START
+    private var a: Int = 0
+    private var y: Int = 0
+
+    fun start() {
+        resumeWith(Result.success(null))
+    }
+
+    fun resume(value: Int) {
+        resumeWith(Result.success(value))
+    }
+
+    override fun resumeWith(result: Result<Int?>) {
+        if (label >= DONE) throw IllegalStateException("Coroutine is already done")
+
+        if (result.isFailure) {
+            label = DONE
+            completion.resumeWith(Result.failure(result.exceptionOrNull()!!))
+            return
+        }
+
+        val value = result.getOrThrow()
+
+        if (label == START && value != null) throw IllegalStateException("Coroutine is not started")
+        if (label != START && value == null) throw IllegalStateException("Coroutine is already started")
+
+        when (label) {
+            START -> {
+                a = 10
+                println("구간1: a=$a")
+                label = 1
+                awaitValue(this)
+            }
+
+            1 -> {
+                y = value!!
+                println("구간2: y=$y")
+                label = 2
+                awaitValue(this)
+            }
+
+            2 -> {
+                val z = a + y + value!!
+                println("구간3: z=$z")
+                label = DONE
+                completion.resumeWith(Result.success(z))
+            }
+
+            else -> {
+                throw IllegalStateException("label value is not available")
+            }
+        }
+    }
+
+    companion object {
+        const val DONE = 3
+        const val START = 0
+    }
+}

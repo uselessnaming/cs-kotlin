@@ -4,7 +4,7 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 
 class MyCoroutine(
-    private val completion: Continuation<Int?>,
+    private val completion: Continuation<Int>,
     private val awaitValue: (Continuation<Int?>) -> Unit
 ) : Continuation<Int?> {
     override val context: CoroutineContext = completion.context
@@ -35,31 +35,43 @@ class MyCoroutine(
         if (label == START && value != null) throw IllegalStateException("Coroutine is not started")
         if (label != START && value == null) throw IllegalStateException("Coroutine is already started")
 
-        when (label) {
-            START -> {
-                a = 10
-                println("구간1: a=$a")
-                label = 1
-                awaitValue(this)
-            }
+        var res: Int? = null
 
-            1 -> {
-                y = value!!
-                println("구간2: y=$y")
-                label = 2
-                awaitValue(this)
-            }
+        try {
+            when (label) {
+                START -> {
+                    a = 10
+                    println("구간1: a=$a")
+                    label = 1
+                    awaitValue(this)
+                }
 
-            2 -> {
-                val z = a + y + value!!
-                println("구간3: z=$z")
-                label = DONE
-                completion.resumeWith(Result.success(z))
-            }
+                1 -> {
+                    y = value!!
+                    println("구간2: y=$y")
+                    label = 2
+                    awaitValue(this)
+                }
 
-            else -> {
-                throw IllegalStateException("label value is not available")
+                2 -> {
+                    val z = a + y + value!!
+                    println("구간3: z=$z")
+                    label = DONE
+                    res = z
+                }
+
+                else -> {
+                    throw IllegalStateException("label value is not available")
+                }
             }
+        } catch (e: Exception) {
+            label = DONE
+            completion.resumeWith(Result.failure(e))
+            return
+        }
+
+        if (res != null) {
+            completion.resumeWith(Result.success(res))
         }
     }
 

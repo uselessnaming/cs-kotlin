@@ -1,5 +1,6 @@
 package thread_coroutine
 
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 
@@ -10,11 +11,14 @@ class MyCoroutine(
 ) : Continuation<Int?> {
     override val context: CoroutineContext = completion.context
     private val continuation = DispatchedContinuation(delegate = this, dispatcher = dispatcher)
+    private val started = AtomicBoolean(false)
+
     private var label = START
     private var a: Int = 0
     private var y: Int = 0
 
     fun start() {
+        if (!started.compareAndSet(false, true)) throw IllegalStateException("already started")
         continuation.resumeWith(Result.success(null))
     }
 

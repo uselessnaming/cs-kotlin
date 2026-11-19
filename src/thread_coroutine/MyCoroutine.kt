@@ -4,21 +4,22 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 
 class MyCoroutine(
+    private val dispatcher: MyDispatcher,
     private val completion: Continuation<Int>,
     private val awaitValue: (Continuation<Int?>) -> Unit
 ) : Continuation<Int?> {
     override val context: CoroutineContext = completion.context
-
+    private val continuation = DispatchedContinuation(delegate = this, dispatcher = dispatcher)
     private var label = START
     private var a: Int = 0
     private var y: Int = 0
 
     fun start() {
-        resumeWith(Result.success(null))
+        continuation.resumeWith(Result.success(null))
     }
 
     fun resume(value: Int) {
-        resumeWith(Result.success(value))
+        continuation.resumeWith(Result.success(value))
     }
 
     override fun resumeWith(result: Result<Int?>) {
@@ -43,14 +44,14 @@ class MyCoroutine(
                     a = 10
                     println("구간1: a=$a")
                     label = 1
-                    awaitValue(this)
+                    awaitValue(continuation)
                 }
 
                 1 -> {
                     y = value!!
                     println("구간2: y=$y")
                     label = 2
-                    awaitValue(this)
+                    awaitValue(continuation)
                 }
 
                 2 -> {

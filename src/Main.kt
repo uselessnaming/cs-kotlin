@@ -1,4 +1,5 @@
 import thread_coroutine.MyCoroutine
+import thread_coroutine.MyDispatcher
 import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
 import kotlin.coroutines.Continuation
@@ -16,6 +17,7 @@ fun main() {
             latch.countDown()
         }
     }
+    val dispatcher = MyDispatcher()
     val awaitValue: (Continuation<Int?>) -> Unit = { cont ->
         val v = values.removeFirst()
         thread(name = "timer-$v") {
@@ -24,7 +26,7 @@ fun main() {
             cont.resume(v)
         }
     }
-    val coroutine = MyCoroutine(completion, awaitValue)
+    val coroutine = MyCoroutine(dispatcher, completion, awaitValue)
 
     println("[main] start 호출")
     coroutine.start()

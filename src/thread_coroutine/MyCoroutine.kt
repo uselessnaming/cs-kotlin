@@ -1,17 +1,26 @@
 package thread_coroutine
 
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 
 class MyCoroutine(
     private val dispatcher: MyDispatcher,
-    private val completion: Continuation<Int>,
+    private val completion: Continuation<Int?>,
     private val awaitValue: (Continuation<Int?>) -> Unit
 ) : Continuation<Int?> {
     override val context: CoroutineContext = completion.context
     private val continuation = DispatchedContinuation(delegate = this, dispatcher = dispatcher)
     private val started = AtomicBoolean(false)
+
+    private val done = CountDownLatch(1)
+    private var outcome: Result<Int?>? = null
+
+    private val lock = ReentrantLock()
+    private val waitingQueue = ArrayDeque<Continuation<Int?>>()
 
     private var label = START
     private var a: Int = 0
@@ -31,7 +40,7 @@ class MyCoroutine(
 
         if (result.isFailure) {
             label = DONE
-            completion.resumeWith(Result.failure(result.exceptionOrNull()!!))
+            finish(Result.failure(result.exceptionOrNull()!!))
             return
         }
 
@@ -71,13 +80,54 @@ class MyCoroutine(
             }
         } catch (e: Exception) {
             label = DONE
-            completion.resumeWith(Result.failure(e))
+            finish(Result.failure(e))
             return
         }
 
         if (res != null) {
-            completion.resumeWith(Result.success(res))
+            finish(Result.success(res))
         }
+    }
+
+    private fun finish(result: Result<Int?>) {
+        val toWake = lock.withLock {
+            outcome = result
+            done.countDown()
+
+            val jobs = mutableListOf<Continuation<Int?>>()
+
+            while(waitingQueue.isNotEmpty()) jobs.add(waitingQueue.removeFirst())
+
+            return@withLock jobs
+        }
+
+        try {
+            completion.resumeWith(result)
+        } catch (e: Exception) {
+            println("Error occur : ${e.localizedMessage}")
+            throw e
+        } finally {
+            toWake.forEach { job ->
+                try {
+                    job.resumeWith(result)
+                } catch (e: Exception) {
+                    println("Error : ${e.localizedMessage}")
+                }
+            }
+        }
+    }
+
+    fun join(waiter: Continuation<Int?>) {
+        val finished: Result<Int?>? = lock.withLock {
+            if (outcome != null) {
+                return@withLock outcome
+            } else {
+                waitingQueue.add(waiter)
+                return@withLock null
+            }
+        }
+
+        if (finished != null) waiter.resumeWith(finished)
     }
 
     companion object {

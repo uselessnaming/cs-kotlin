@@ -7,7 +7,6 @@ import kotlin.concurrent.withLock
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.coroutines.resumeWithException
 
 class MyCoroutine(
     private val dispatcher: MyDispatcher,
@@ -15,8 +14,9 @@ class MyCoroutine(
     private val awaitValue: (Continuation<Int?>) -> Unit
 ) : Continuation<Int?> {
     override val context: CoroutineContext = completion.context
+
+    private val job = MyJob()
     private val continuation = DispatchedContinuation(delegate = this, dispatcher = dispatcher)
-    private val started = AtomicBoolean(false)
 
     private var outcome: Result<Int?>? = null
     private val lock = ReentrantLock()
@@ -27,7 +27,7 @@ class MyCoroutine(
     private var y: Int = 0
 
     fun start() {
-        if (!started.compareAndSet(false, true)) throw IllegalStateException("already started")
+        if (!job.tryStart()) throw IllegalStateException("already started")
         continuation.resumeWith(Result.success(null))
     }
 
@@ -116,7 +116,7 @@ class MyCoroutine(
         toWake.forEach { job ->
             try {
                 job.resumeWith(result)
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 record(e)
             }
         }

@@ -8,7 +8,7 @@ import kotlin.coroutines.cancellation.CancellationException
 class MyJob {
     private var state = State.NEW
     private var outcome: Result<Int?>? = null
-    private val children: MutableList<ChildJob> = mutableListOf()
+    private val children: LinkedHashSet<ChildJob> = linkedSetOf()
 
     private val waitingQueue = ArrayDeque<Continuation<Int?>>()
     private val lock = ReentrantLock()
@@ -109,6 +109,12 @@ class MyJob {
                 }
                 else -> throw IllegalStateException("this job is already done")
             }
+        }
+    }
+
+    fun detach(child: ChildJob) {
+        lock.withLock {
+            children.remove(child)
         }
     }
 

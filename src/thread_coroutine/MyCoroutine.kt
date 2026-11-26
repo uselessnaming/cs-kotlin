@@ -1,5 +1,6 @@
 package thread_coroutine
 
+import thread_coroutine.MyJob.AttachResult
 import thread_coroutine.MyJob.StartResult
 import java.util.concurrent.CountDownLatch
 import kotlin.coroutines.Continuation
@@ -27,7 +28,7 @@ class MyCoroutine(
             StartResult.CANCELLED -> throw CancellationException("coroutine is already cancelled")
             StartResult.STARTED -> continuation.resumeWith(Result.success(null))
         }
-    }
+}
 
     fun resume(value: Int) {
         continuation.resumeWith(Result.success(value))
@@ -143,6 +144,24 @@ class MyCoroutine(
             MyJob.CancelResult.FINISH_NOW -> { finish(Result.failure(job.getCancelCause()!!)) }
             MyJob.CancelResult.IGNORED -> { /** 무시되면 그냥 넘어간다 ***/ }
         }
+    }
+
+    fun attachChild(child: MyCoroutine) {
+        when (job.attach(child)) {
+            AttachResult.ATTACHED -> { watchChild(child) }
+            AttachResult.PARENT_CANCELLED -> { child.cancel() }
+        }
+    }
+
+    private fun watchChild(child: MyCoroutine) {
+        val waiter = Continuation<Int?>(EmptyCoroutineContext) { res ->
+            onChildFinished(child, res)
+        }
+        child.join(waiter)
+    }
+
+    private fun onChildFinished(child: MyCoroutine, result: Result<Int?>) {
+        job.detach(child)
     }
 
     companion object {

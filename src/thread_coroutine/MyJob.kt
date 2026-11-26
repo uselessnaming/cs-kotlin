@@ -40,15 +40,15 @@ class MyJob {
                 State.NEW -> {
                     cancelCause = CancellationException()
                     state = State.CANCELLING
-                    CancelResult.FINISH_NOW
+                    CancelResult.FinishNow(children.toList())
                 }
                 State.ACTIVE -> {
                     cancelCause = CancellationException()
                     state = State.CANCELLING
-                    CancelResult.REQUESTED
+                    CancelResult.Requested(children.toList())
                 }
                 else -> {
-                    CancelResult.IGNORED
+                    CancelResult.Ignored
                 }
             }
         }
@@ -131,8 +131,10 @@ class MyJob {
         NEW, ACTIVE, CANCELLING, CANCELLED, COMPLETED
     }
 
-    enum class CancelResult {
-        FINISH_NOW, REQUESTED, IGNORED
+    sealed class CancelResult {
+        data class FinishNow(val children: List<ChildJob>): CancelResult()
+        data class Requested(val children: List<ChildJob>): CancelResult()
+        data object Ignored: CancelResult()
     }
 
     enum class StartResult {

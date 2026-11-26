@@ -139,11 +139,35 @@ class MyCoroutine(
     }
 
     override fun cancel() {
-        when (job.tryCancel()) {
-            MyJob.CancelResult.REQUESTED -> { continuation.resumeWith(Result.failure(job.getCancelCause()!!)) }
-            MyJob.CancelResult.FINISH_NOW -> { finish(Result.failure(job.getCancelCause()!!)) }
-            MyJob.CancelResult.IGNORED -> { /** 무시되면 그냥 넘어간다 ***/ }
+        when (val cancelResult = job.tryCancel()) {
+            is MyJob.CancelResult.Requested -> {
+                requestChildrenCancel(cancelResult.children)
+                continuation.resumeWith(Result.failure(job.getCancelCause()!!))
+            }
+            is MyJob.CancelResult.FinishNow -> {
+                requestChildrenCancel(cancelResult.children)
+                finish(Result.failure(job.getCancelCause()!!))
+            }
+            MyJob.CancelResult.Ignored -> { /** 무시되면 그냥 넘어간다 ***/ }
         }
+    }
+
+    private fun requestChildrenCancel(children: List<ChildJob>) {
+        var first: Throwable? = null
+        fun record(e: Throwable) {
+            if (first == null) first = e
+            else first.addSuppressed(e)
+        }
+
+        for (child in children) {
+            try {
+                child.cancel()
+            } catch (e: Throwable) {
+                record(e)
+            }
+        }
+
+        if (first != null) throw first
     }
 
     fun attachChild(child: MyCoroutine) {

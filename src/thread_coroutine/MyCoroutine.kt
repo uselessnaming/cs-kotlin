@@ -1,9 +1,11 @@
 package thread_coroutine
 
+import thread_coroutine.MyJob.StartResult
 import java.util.concurrent.CountDownLatch
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.cancellation.CancellationException
 
 class MyCoroutine(
     private val dispatcher: MyDispatcher,
@@ -20,8 +22,11 @@ class MyCoroutine(
     private var y: Int = 0
 
     fun start() {
-        if (!job.tryStart()) throw IllegalStateException("already started")
-        continuation.resumeWith(Result.success(null))
+        when(job.tryStart()) {
+            StartResult.ALREADY_STARTED -> throw IllegalStateException("already started")
+            StartResult.CANCELLED -> throw CancellationException("coroutine is already cancelled")
+            StartResult.STARTED -> continuation.resumeWith(Result.success(null))
+        }
     }
 
     fun resume(value: Int) {
@@ -29,6 +34,10 @@ class MyCoroutine(
     }
 
     override fun resumeWith(result: Result<Int?>) {
+        if (job.isCancelRequested()) {
+            if (result.isSuccess || label >= DONE) return
+        }
+
         if (label >= DONE) throw IllegalStateException("Coroutine is already done")
 
         if (result.isFailure) {
@@ -130,8 +139,8 @@ class MyCoroutine(
 
     fun cancel() {
         when (job.tryCancel()) {
-            MyJob.CancelResult.REQUESTED -> { /** 요청이 들어오면 어떻게 해야할지 모르곘다 */ }
-            MyJob.CancelResult.FINISH_NOW -> { /** Finish now가 걸리면 completion 에 job의 cancelCause를 전달한다 */ }
+            MyJob.CancelResult.REQUESTED -> { continuation.resumeWith(Result.failure(job.getCancelCause()!!)) }
+            MyJob.CancelResult.FINISH_NOW -> { finish(Result.failure(job.getCancelCause()!!)) }
             MyJob.CancelResult.IGNORED -> { /** 무시되면 그냥 넘어간다 ***/ }
         }
     }

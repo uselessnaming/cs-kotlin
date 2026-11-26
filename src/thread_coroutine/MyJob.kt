@@ -14,13 +14,21 @@ class MyJob {
 
     private var cancelCause: CancellationException? = null
 
-    fun tryStart(): Boolean {
+    fun tryStart(): StartResult {
         return lock.withLock {
-            if (state == State.NEW) {
-                state = State.ACTIVE
-                true
-            } else {
-                false
+            when(state) {
+                State.NEW -> {
+                    state = State.ACTIVE
+                    StartResult.STARTED
+                }
+
+                State.ACTIVE, State.COMPLETED -> {
+                    StartResult.ALREADY_STARTED
+                }
+
+                else -> {
+                    StartResult.CANCELLED
+                }
             }
         }
     }
@@ -90,6 +98,8 @@ class MyJob {
 
     fun getCancelCause(): CancellationException? = lock.withLock { cancelCause }
 
+    fun isCancelRequested(): Boolean = lock.withLock { cancelCause != null }
+
     data class CompleteResult(
         val outcome: Result<Int?>,
         val waiters: List<Continuation<Int?>>
@@ -101,5 +111,9 @@ class MyJob {
 
     enum class CancelResult {
         FINISH_NOW, REQUESTED, IGNORED
+    }
+
+    enum class StartResult {
+        STARTED, ALREADY_STARTED, CANCELLED
     }
 }

@@ -6,8 +6,9 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.cancellation.CancellationException
 
 class MyJob {
-    private var outcome: Result<Int?>? = null
     private var state = State.NEW
+    private var outcome: Result<Int?>? = null
+    private val children: MutableList<ChildJob> = mutableListOf()
 
     private val waitingQueue = ArrayDeque<Continuation<Int?>>()
     private val lock = ReentrantLock()
@@ -53,6 +54,17 @@ class MyJob {
         }
     }
 
+    fun tryRegister(waiter: Continuation<Int?>): Result<Int?>? {
+        return lock.withLock {
+            if (state == State.COMPLETED || state == State.CANCELLED) {
+                outcome
+            } else {
+                waitingQueue.add(waiter)
+                null
+            }
+        }
+    }
+
     fun complete(result: Result<Int?>): CompleteResult {
         return lock.withLock {
             val dq = ArrayDeque<Continuation<Int?>>()
@@ -85,13 +97,17 @@ class MyJob {
         }
     }
 
-    fun tryRegister(waiter: Continuation<Int?>): Result<Int?>? {
+    fun attach(child: ChildJob): AttachResult {
         return lock.withLock {
-            if (state == State.COMPLETED || state == State.CANCELLED) {
-                outcome
-            } else {
-                waitingQueue.add(waiter)
-                null
+            when(state) {
+                State.NEW, State.ACTIVE -> {
+                    children.add(child)
+                    AttachResult.ATTACHED
+                }
+                State.CANCELLING, State.CANCELLED -> {
+                    AttachResult.PARENT_CANCELLED
+                }
+                else -> throw IllegalStateException("this job is already done")
             }
         }
     }
@@ -115,5 +131,9 @@ class MyJob {
 
     enum class StartResult {
         STARTED, ALREADY_STARTED, CANCELLED
+    }
+
+    enum class AttachResult {
+        ATTACHED, PARENT_CANCELLED
     }
 }

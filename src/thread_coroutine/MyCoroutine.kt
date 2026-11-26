@@ -1,9 +1,6 @@
 package thread_coroutine
 
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -17,10 +14,6 @@ class MyCoroutine(
 
     private val job = MyJob()
     private val continuation = DispatchedContinuation(delegate = this, dispatcher = dispatcher)
-
-    private var outcome: Result<Int?>? = null
-    private val lock = ReentrantLock()
-    private val waitingQueue = ArrayDeque<Continuation<Int?>>()
 
     private var label = START
     private var a: Int = 0
@@ -90,32 +83,24 @@ class MyCoroutine(
     }
 
     private fun finish(result: Result<Int?>) {
-        val toWake = lock.withLock {
-            outcome = result
-            val jobs = mutableListOf<Continuation<Int?>>()
-
-            while(waitingQueue.isNotEmpty()) jobs.add(waitingQueue.removeFirst())
-
-            return@withLock jobs
-        }
-
         var first: Throwable? = null
-
         fun record(e: Throwable) {
             if (first == null) first = e
             else first.addSuppressed(e)
         }
 
+        val (outcome, toWake) = job.complete(result)
+
         try {
-            completion.resumeWith(result)
+            completion.resumeWith(outcome)
         } catch (e: Throwable) {
             println("Error occur : ${e.localizedMessage}")
             record(e)
         }
 
-        toWake.forEach { job ->
+        toWake.forEach { waiter ->
             try {
-                job.resumeWith(result)
+                waiter.resumeWith(outcome)
             } catch (e: Throwable) {
                 record(e)
             }
@@ -125,14 +110,7 @@ class MyCoroutine(
     }
 
     fun join(waiter: Continuation<Int?>) {
-        val finished: Result<Int?>? = lock.withLock {
-            if (outcome != null) {
-                return@withLock outcome
-            } else {
-                waitingQueue.add(waiter)
-                return@withLock null
-            }
-        }
+        val finished: Result<Int?>? = job.tryRegister(waiter)
 
         if (finished != null) waiter.resumeWith(finished)
     }
@@ -148,6 +126,14 @@ class MyCoroutine(
         latch.await()
 
         return holder!!
+    }
+
+    fun cancel() {
+        when (job.tryCancel()) {
+            MyJob.CancelResult.REQUESTED -> { /** 요청이 들어오면 어떻게 해야할지 모르곘다 */ }
+            MyJob.CancelResult.FINISH_NOW -> { /** Finish now가 걸리면 completion 에 job의 cancelCause를 전달한다 */ }
+            MyJob.CancelResult.IGNORED -> { /** 무시되면 그냥 넘어간다 ***/ }
+        }
     }
 
     companion object {

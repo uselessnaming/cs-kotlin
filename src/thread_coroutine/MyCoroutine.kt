@@ -11,7 +11,7 @@ class MyCoroutine(
     private val dispatcher: MyDispatcher,
     private val completion: Continuation<Int?>,
     private val awaitValue: (Continuation<Int?>) -> Unit
-) : Continuation<Int?> {
+) : Continuation<Int?>, ChildJob {
     override val context: CoroutineContext = completion.context
 
     private val job = MyJob()
@@ -137,7 +137,7 @@ class MyCoroutine(
         return holder!!
     }
 
-    fun cancel() {
+    override fun cancel() {
         when (job.tryCancel()) {
             MyJob.CancelResult.REQUESTED -> { continuation.resumeWith(Result.failure(job.getCancelCause()!!)) }
             MyJob.CancelResult.FINISH_NOW -> { finish(Result.failure(job.getCancelCause()!!)) }
